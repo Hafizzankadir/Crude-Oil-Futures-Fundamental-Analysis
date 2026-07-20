@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CL1 — WTI Crude Fundamental Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#ffffff;
+    --panel:#fbfbf9;
+    --panel-alt:#f3f3ef;
+    --ink:#0a0a0b;
+    --ink-soft:#54565c;
+    --ink-faint:#8b8d93;
+    --hair:#d9d9d3;
+    --hair-strong:#0a0a0b;
+    --amber:#a86a06;
+    --amber-bg:#fbf1de;
+    --up:#0d7a3f;
+    --down:#a52a20;
+    --focus:#1258d1;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{color:inherit;}
+  .mono{font-family:'IBM Plex Mono',monospace;}
+  .disp{font-family:'Oswald',sans-serif;}
+
+  :focus-visible{outline:2px solid var(--focus); outline-offset:2px;}
+
+  /* ---------- Ticker ---------- */
+  .ticker-bar{
+    background:var(--ink);
+    color:#fff;
+    overflow:hidden;
+    white-space:nowrap;
+    border-bottom:1px solid var(--hair-strong);
+    height:34px;
+    display:flex;
+    align-items:center;
+  }
+  .ticker-track{
+    display:inline-flex;
+    align-items:center;
+    animation:scroll-left 38s linear infinite;
+    padding-left:100%;
+  }
+  @keyframes scroll-left{
+    from{transform:translateX(0);}
+    to{transform:translateX(-100%);}
+  }
+  .tick{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    letter-spacing:.03em;
+    padding:0 22px;
+    display:inline-flex;
+    gap:8px;
+    border-right:1px solid #3a3a3a;
+  }
+  .tick .sym{color:#fff; font-weight:600;}
+  .tick .up{color:#7fe0a6;}
+  .tick .down{color:#ff9d90;}
+
+  /* ---------- Top masthead ---------- */
+  .masthead{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:16px 28px;
+    border-bottom:2px solid var(--hair-strong);
+    flex-wrap:wrap;
+    gap:12px;
+  }
+  .brand{display:flex; align-items:baseline; gap:14px;}
+  .brand .mark{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:.02em;
+    text-transform:uppercase;
+  }
+  .brand .mark .accent{color:var(--amber);}
+  .brand .sub{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-soft);
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    border-left:1px solid var(--hair);
+    padding-left:14px;
+  }
+  .clock-block{
+    font-family:'IBM Plex Mono',monospace;
+    text-align:right;
+    font-size:11px;
+    color:var(--ink-soft);
+    letter-spacing:.05em;
+  }
+  #clock{font-size:16px; color:var(--ink); font-weight:600;}
+
+  /* ---------- Shell layout ---------- */
+  .shell{
+    display:grid;
+    grid-template-columns:200px 1fr;
+    min-height:100vh;
+  }
+  nav.rail{
+    border-right:1px solid var(--hair-strong);
+    padding:18px 0;
+    background:var(--panel);
+  }
+  nav.rail .rail-title{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.16em;
+    color:var(--ink-faint);
+    text-transform:uppercase;
+    padding:0 18px 10px;
+  }
+  nav.rail a{
+    display:flex;
+    justify-content:space-between;
+    text-decoration:none;
+    padding:9px 18px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12.5px;
+    color:var(--ink);
+    border-left:3px solid transparent;
+  }
+  nav.rail a:hover, nav.rail a:focus-visible{
+    background:var(--amber-bg);
+    border-left:3px solid var(--amber);
+  }
+  nav.rail a span.code{color:var(--ink-faint); font-size:11px;}
+  main{padding:26px 30px 60px;}
+
+  section{margin-bottom:34px;}
+  .section-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1px solid var(--hair-strong);
+    padding-bottom:8px;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .section-head h2{
+    font-family:'Oswald',sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    font-size:18px;
+    margin:0;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .section-head h2 .fn{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:#fff;
+    background:var(--ink);
+    padding:2px 7px;
+    letter-spacing:.05em;
+  }
+  .section-head .meta{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+  }
+
+  /* ---------- Panels / grid ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    gap:18px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--hair);
+    padding:16px 18px;
+  }
+  .panel h3{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11.5px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--ink-soft);
+    margin:0 0 12px;
+    display:flex;
+    justify-content:space-between;
+  }
+  .col-4{grid-column:span 4;}
+  .col-6{grid-column:span 6;}
+  .col-8{grid-column:span 8;}
+  .col-12{grid-column:span 12;}
+  @media (max-width:1000px){
+    .col-4,.col-6,.col-8{grid-column:span 12;}
+    .shell{grid-template-columns:1fr;}
+    nav.rail{
+      display:flex;
+      overflow-x:auto;
+      padding:10px 6px;
+      border-right:none;
+      border-bottom:1px solid var(--hair-strong);
+    }
+    nav.rail .rail-title{display:none;}
+    nav.rail a{border-left:none; border-bottom:3px solid transparent; white-space:nowrap;}
+    nav.rail a:hover, nav.rail a:focus-visible{border-left:none; border-bottom:3px solid var(--amber);}
+  }
+
+  table{width:100%; border-collapse:collapse; font-family:'IBM Plex Mono',monospace; font-size:12px;}
+  th,td{text-align:right; padding:5px 4px; border-bottom:1px solid var(--hair);}
+  th:first-child,td:first-child{text-align:left;}
+  th{color:var(--ink-faint); font-weight:500; text-transform:uppercase; font-size:10.5px; letter-spacing:.05em;}
+  td.up{color:var(--up); font-weight:600;}
+  td.down{color:var(--down); font-weight:600;}
+
+  .stat-row{display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:12.5px; padding:6px 0; border-bottom:1px solid var(--hair);}
+  .stat-row:last-child{border-bottom:none;}
+  .stat-row .label{color:var(--ink-soft);}
+  .stat-row .val{font-weight:600;}
+
+  .badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:10px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    padding:2px 7px;
+    border:1px solid var(--ink);
+  }
+  .badge.bull{color:var(--up); border-color:var(--up);}
+  .badge.bear{color:var(--down); border-color:var(--down);}
+  .badge.neutral{color:var(--ink-soft);}
+
+  /* ---------- Composite gauge (signature element) ---------- */
+  .gauge-wrap{
+    display:grid;
+    grid-template-columns:1.1fr 1fr;
+    gap:26px;
+    align-items:center;
+  }
+  @media (max-width:820px){.gauge-wrap{grid-template-columns:1fr;}}
+  .gauge-caption{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    text-align:center;
+    margin-top:4px;
+  }
+  .gauge-score{
+    font-family:'Oswald',sans-serif;
+    font-weight:700;
+    text-align:center;
+    font-size:34px;
+    margin-top:-6px;
+  }
+  .weights th, .weights td{font-size:11.5px;}
+  .bar-track{
+    background:var(--panel-alt);
+    height:8px;
+    border:1px solid var(--hair);
+    position:relative;
+    width:90px;
+  }
+  .bar-fill{position:absolute; top:0; bottom:0; left:50%;}
+  .bar-fill.pos{background:var(--up);}
+  .bar-fill.neg{background:var(--down); left:auto; right:50%;}
+
+  footer{
+    border-top:2px solid var(--hair-strong);
+    padding:20px 30px 40px;
+    font-family:'IBM Plex Mono',monospace;
+    font-size:11px;
+    color:var(--ink-faint);
+    line-height:1.7;
+  }
+  footer strong{color:var(--ink-soft);}
+  .src-list{display:flex; gap:26px; flex-wrap:wrap; margin-top:10px;}
+
+  .note{
+    font-family:'Inter',sans-serif;
+    font-size:12px;
+    color:var(--ink-soft);
+    line-height:1.55;
+    margin-top:10px;
+  }
+
+  svg text{font-family:'IBM Plex Mono',monospace;}
+</style>
+</head>
+<body>
+
+<div class="ticker-bar">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<header class="masthead">
+  <div class="brand">
+    <div class="mark">CL<span class="accent">1</span> Fundamental Desk</div>
+    <div class="sub">WTI Crude Oil Futures · NYMEX</div>
+  </div>
+  <div class="clock-block">
+    <div id="clock">--:--:--</div>
+    <div id="dateline">—</div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="Module navigation">
+    <div class="rail-title">Modules</div>
+    <a href="#overview"><span>Overview</span><span class="code">OVW</span></a>
+    <a href="#inventory"><span>Inventory</span><span class="code">INV</span></a>
+    <a href="#cot"><span>COT Positioning</span><span class="code">COT</span></a>
+    <a href="#geo"><span>Geopolitical</span><span class="code">GEO</span></a>
+    <a href="#fx"><span>Currency</span><span class="code">FX</span></a>
+    <a href="#rates"><span>Rates</span><span class="code">IR</span></a>
+    <a href="#supply"><span>Supply / Demand</span><span class="code">S&amp;D</span></a>
+    <a href="#method"><span>Methodology</span><span class="code">NOTE</span></a>
+  </nav>
+
+  <main>
+
+    <!-- OVERVIEW / COMPOSITE GAUGE -->
+    <section id="overview">
+      <div class="section-head">
+        <h2><span class="fn">OVW</span> Composite Fundamental Bias</h2>
+        <span class="meta" id="asOf">AS OF —</span>
+      </div>
+      <div class="panel">
+        <div class="gauge-wrap">
+          <div>
+            <svg id="gaugeSvg" viewBox="0 0 320 190" width="100%" role="img" aria-label="Composite fundamental bias gauge">
+              <!-- built by JS -->
+            </svg>
+            <div class="gauge-score" id="gaugeScore">—</div>
+            <div class="gauge-caption" id="gaugeLabel">Loading composite read…</div>
+          </div>
+          <div>
+            <table class="weights">
+              <thead>
+                <tr><th>Module</th><th>Weight</th><th>Score</th><th>Contribution</th></tr>
+              </thead>
+              <tbody id="weightsBody"></tbody>
+              <tfoot>
+                <tr>
+                  <td style="font-weight:700;">Composite</td>
+                  <td></td><td></td>
+                  <td id="compositeCell" style="font-weight:700;"></td>
+                </tr>
+              </tfoot>
+            </table>
+            <p class="note">Score runs −100 (maximally bearish) to +100 (maximally bullish). Each module score below is set from the underlying data in that module's panel — edit the <span class="mono">moduleData</span> object in the page source to re-weight or refresh with live figures.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INVENTORY -->
+    <section id="inventory">
+      <div class="section-head">
+        <h2><span class="fn">INV</span> Inventory Report</h2>
+        <span class="meta">EIA Weekly Petroleum Status · API Weekly Estimate</span>
+      </div>
+      <div class="grid">
+        <div class="panel col-8">
+          <h3>US Commercial Crude Stock Change — Last 8 Weeks (MMbbl) <span id="invBadge"></span></h3>
+          <svg id="invChart" viewBox="0 0 640 210" width="100%"></svg>
+        </div>
+        <div class="panel col-4">
+          <h3>Storage Snapshot</h3>
+          <div class="stat-row"><span class="label">EIA Weekly Draw/Build</span><span class="val down" id="invLatest">—</span></div>
+          <div class="stat-row"><span class="label">API Estimate (prior day)</span><span class="val" id="invApi">—</span></div>
+          <div class="stat-row"><span class="label">Cushing, OK Utilization</span><span class="val" id="cushingPct">—</span></div>
+          <div class="stat-row"><span class="label">SPR Level</span><span class="val" id="sprLevel">—</span></div>
+          <div class="stat-row"><span class="label">Refinery Utilization</span><span class="val" id="refUtil">—</span></div>
+          <p class="note">Institutional desks trade the EIA print (Wed. 10:30am ET) against consensus estimates and the prior evening's API figure; a wide EIA/API divergence itself becomes a short-term volatility signal.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- COT -->
+    <section id="cot">
+      <div class="section-head">
+        <h2><span class="fn">COT</span> Commitments of Traders</h2>
+        <span class="meta">CFTC Disaggregated Futures &amp; Options, NYMEX WTI</span>
+      </div>
+      <div class="grid">
+        <div class="panel col-8">
+          <h3>Managed Money Net Position — Last 10 Weeks (000s contracts)</h3>
+          <svg id="cotChart" viewBox="0 0 640 210" width="100%"></svg>
+        </div>
+        <div class="panel col-4">
+          <h3>Positioning Breakdown</h3>
+          <table>
+            <thead><tr><th>Category</th><th>Long</th><th>Short</th><th>Net</th></tr></thead>
+            <tbody id="cotTable"></tbody>
+          </table>
+          <p class="note">Falling managed-money net length alongside firm price action often signals short-covering rather than fresh conviction — desks read COT as a positioning / crowding gauge, not a standalone directional signal.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- GEOPOLITICAL -->
+    <section id="geo">
+      <div class="section-head">
+        <h2><span class="fn">GEO</span> Geopolitical Risk</h2>
+        <span class="meta">Composite risk score by flashpoint · 0–100</span>
+      </div>
+      <div class="grid">
+        <div class="panel col-8">
+          <h3>Risk Score by Region</h3>
+          <div id="geoBars"></div>
+        </div>
+        <div class="panel col-4">
+          <h3>Risk Premium Estimate</h3>
+          <div class="stat-row"><span class="label">Est. premium in WTI</span><span class="val" id="geoPremium">—</span></div>
+          <div class="stat-row"><span class="label">Strait of Hormuz transit</span><span class="val" id="hormuz">—</span></div>
+          <div class="stat-row"><span class="label">Sanctioned barrels rerouted</span><span class="val" id="sanctions">—</span></div>
+          <p class="note">Geopolitical risk is priced through the futures curve shape (backwardation steepening), options skew, and realized vs. implied volatility spread — not from headlines alone.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CURRENCY -->
+    <section id="fx">
+      <div class="section-head">
+        <h2><span class="fn">FX</span> Currency Strength</h2>
+        <span class="meta">DXY Dollar Index vs. WTI</span>
+      </div>
+      <div class="grid">
+        <div class="panel col-8">
+          <h3>DXY — 20 Session Trend</h3>
+          <svg id="fxChart" viewBox="0 0 640 180" width="100%"></svg>
+        </div>
+        <div class="panel col-4">
+          <h3>Correlation Read</h3>
+          <div class="stat-row"><span class="label">DXY Level</span><span class="val" id="dxyLevel">—</span></div>
+          <div class="stat-row"><span class="label">20d Change</span><span class="val" id="dxyChange">—</span></div>
+          <div class="stat-row"><span class="label">60d Corr. vs WTI</span><span class="val" id="dxyCorr">—</span></div>
+          <p class="note">Oil is dollar-denominated, so a firming DXY is a structural headwind for USD-priced crude even when physical fundamentals are stable.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RATES -->
+    <section id="rates">
+      <div class="section-head">
+        <h2><span class="fn">IR</span> Interest Rate &amp; Macro</h2>
+        <span class="meta">Fed Funds · Real Yields · Growth Proxies</span>
+      </div>
+      <div class="grid">
+        <div class="panel col-4">
+          <h3>Policy Rate</h3>
+          <div class="stat-row"><span class="label">Fed Funds Target</span><span class="val" id="fedFunds">—</span></div>
+          <div class="stat-row"><span class="label">US 10Y Real Yield</span><span class="val" id="realYield">—</span></div>
+          <div class="stat-row"><span class="label">Next FOMC</span><span class="val" id="fomcDate">—</span></div>
+        </div>
+        <div class="panel col-4">
+          <h3>Growth Proxies</h3>
+          <div class="stat-row"><span class="label">Global Mfg. PMI</span><span class="val" id="pmi">—</span></div>
+          <div class="stat-row"><span class="label">China Crude Imports YoY</span><span class="val" id="chinaImports">—</span></div>
+          <div class="stat-row"><span class="label">OECD Demand Growth</span><span class="val" id="oecdDemand">—</span></div>
+        </div>
+        <div class="panel col-4">
+          <h3>Volatility Regime</h3>
+          <div class="stat-row"><span class="label">Options Implied Vol.</span><span class="val" id="impliedVol">—</span></div>
+          <div class="stat-row"><span class="label">30d Realized Vol.</span><span class="val" id="realVol">—</span></div>
+          <div class="stat-row"><span class="label">NG Correlation</span><span class="val" id="ngCorr">—</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SUPPLY / DEMAND -->
+    <section id="supply">
+      <div class="section-head">
+        <h2><span class="fn">S&amp;D</span> Supply &amp; Demand — Other Institutional Methods</h2>
+        <span class="meta">OPEC+, Shale, Rig Count, Spare Capacity</span>
+      </div>
+      <div class="grid" id="supplyGrid"></div>
+    </section>
+
+    <!-- METHODOLOGY -->
+    <section id="method">
+      <div class="section-head">
+        <h2><span class="fn">NOTE</span> Methodology</h2>
+      </div>
+      <div class="panel">
+        <p class="note" style="margin-top:0;">
+          This desk mirrors the layered approach institutional crude desks use: <strong>supply data</strong> (OPEC+ quotas, shale, spare capacity), <strong>demand data</strong> (refinery runs, China imports, PMI), <strong>inventory prints</strong> (EIA/API/Cushing), <strong>positioning</strong> (CFTC COT), <strong>geopolitical risk premium</strong>, <strong>macro/FX</strong> (DXY, real rates), and <strong>volatility/flow</strong> signals — synthesized into one composite bias rather than traded in isolation.
+        </p>
+        <p class="note">All figures on this page are illustrative placeholders for framework purposes. To wire in live data, the natural sources are the EIA Open Data API (api.eia.gov) for inventories and production, the CFTC Commitments of Traders API (publicreporting.cftc.gov) for positioning, and FRED (fred.stlouisfed.org) for DXY and rate series.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer>
+  <div><strong>CL1 Fundamental Desk</strong> — internal framework, illustrative data. Not investment advice.</div>
+  <div class="src-list">
+    <span>EIA Weekly Petroleum Status Report</span>
+    <span>CFTC Commitments of Traders</span>
+    <span>FRED / DXY</span>
+    <span>OPEC Monthly Oil Market Report</span>
+    <span>IEA Oil Market Report</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+
+  /* ---------------- Ticker ---------------- */
+  const ticks = [
+    {sym:'CL1 WTI', v:'83.77', d:'+1.24', p:'+1.50%', up:true},
+    {sym:'CO1 BRENT', v:'86.90', d:'+1.10', p:'+1.28%', up:true},
+    {sym:'DXY', v:'101.42', d:'-0.18', p:'-0.18%', up:false},
+    {sym:'US10Y', v:'4.28%', d:'+0.03', p:'', up:true},
+    {sym:'XAU', v:'2418.10', d:'+6.20', p:'+0.26%', up:true},
+    {sym:'NG1', v:'3.11', d:'-0.02', p:'-0.64%', up:false},
+    {sym:'RBOB', v:'2.47', d:'+0.03', p:'+1.23%', up:true},
+    {sym:'HO1', v:'2.61', d:'+0.02', p:'+0.77%', up:true},
+  ];
+  const track = document.getElementById('tickerTrack');
+  function renderTicker(){
+    const html = ticks.map(t=>`<span class="tick"><span class="sym">${t.sym}</span><span>${t.v}</span><span class="${t.up?'up':'down'}">${t.d} (${t.p})</span></span>`).join('');
+    track.innerHTML = html + html; // duplicate for seamless loop
+  }
+  renderTicker();
+
+  /* ---------------- Clock ---------------- */
+  function pad(n){return n.toString().padStart(2,'0');}
+  function tickClock(){
+    const now = new Date();
+    document.getElementById('clock').textContent = pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds())+' LOCAL';
+    document.getElementById('dateline').textContent = now.toDateString().toUpperCase();
+    document.getElementById('asOf').textContent = 'AS OF '+now.toDateString().toUpperCase()+' '+pad(now.getHours())+':'+pad(now.getMinutes());
+  }
+  tickClock();
+  setInterval(tickClock,1000);
+
+  /* ---------------- Module data (edit / wire to live feeds here) ---------------- */
+  const moduleData = {
+    inventory: {
+      weight:20, score:35,
+      weeks:[-3.2,4.1,-1.8,-0.9,2.3,-4.6,1.2,-2.5], // MMbbl, negative = draw (bullish)
+      latestApi:-3.9, cushingPct:42, spr:389, refUtil:91
+    },
+    cot: {
+      weight:15, score:-20,
+      netLong:[210,205,198,190,182,175,168,158,150,145], // thousands of contracts
+      long:298, short:153
+    },
+    geo: {
+      weight:25, score:55,
+      regions:[
+        {name:'Strait of Hormuz / Middle East', score:82},
+        {name:'Russia–Ukraine / Sanctions', score:58},
+        {name:'Venezuela', score:21},
+        {name:'Niger Delta', score:15},
+        {name:'South China Sea Shipping Lanes', score:12},
+      ],
+      premium:'$6–9/bbl', hormuz:'Partially disrupted', sanctioned:'~1.8 mb/d rerouted'
+    },
+    fx: {
+      weight:15, score:-15,
+      dxy:[99.8,100.1,100.4,100.2,100.6,100.9,100.7,101.0,101.3,101.1,101.4,101.6,101.5,101.8,101.6,101.4,101.2,101.5,101.3,101.42],
+      change:'+1.6%', corr:'-0.71'
+    },
+    rates: {
+      weight:10, score:-10,
+      fedFunds:'4.25%–4.50%', realYield:'1.82%', fomc:'Sep 16–17, 2026 (confirm on calendar)',
+      pmi:'50.4', chinaImports:'+2.1%', oecdDemand:'+0.6%',
+      impliedVol:'28–32%', realVol:'26.4%', ngCorr:'0.65'
+    },
+    supply: {
+      weight:15, score:-25,
+      items:[
+        {label:'OPEC+ Compliance', val:'98%'},
+        {label:'US Rig Count', val:'512'},
+        {label:'US Shale Output', val:'13.6 mb/d'},
+        {label:'Global Spare Capacity', val:'2.6 mb/d'},
+        {label:'OECD Commercial Stocks vs 5y Avg', val:'-2.3%'},
+      ]
+    }
+  };
+
+  /* ---------------- Fill simple stat fields ---------------- */
+  const inv = moduleData.inventory;
+  document.getElementById('invLatest').textContent = inv.weeks.at(-1)+' MMbbl';
+  document.getElementById('invLatest').className = 'val ' + (inv.weeks.at(-1)<0?'up':'down');
+  document.getElementById('invApi').textContent = inv.latestApi+' MMbbl';
+  document.getElementById('cushingPct').textContent = inv.cushingPct+'% of capacity';
+  document.getElementById('sprLevel').textContent = inv.spr+' MMbbl';
+  document.getElementById('refUtil').textContent = inv.refUtil+'%';
+  document.getElementById('invBadge').innerHTML = `<span class="badge ${inv.weeks.at(-1)<0?'bull':'bear'}">${inv.weeks.at(-1)<0?'DRAW':'BUILD'}</span>`;
+
+  const geo = moduleData.geo;
+  document.getElementById('geoPremium').textContent = geo.premium;
+  document.getElementById('hormuz').textContent = geo.hormuz;
+  document.getElementById('sanctions').textContent = geo.sanctioned;
+
+  const fx = moduleData.fx;
+  document.getElementById('dxyLevel').textContent = fx.dxy.at(-1);
+  document.getElementById('dxyChange').textContent = fx.change;
+  document.getElementById('dxyCorr').textContent = fx.corr;
+
+  const r = moduleData.rates;
+  document.getElementById('fedFunds').textContent = r.fedFunds;
+  document.getElementById('realYield').textContent = r.realYield;
+  document.getElementById('fomcDate').textContent = r.fomc;
+  document.getElementById('pmi').textContent = r.pmi;
+  document.getElementById('chinaImports').textContent = r.chinaImports;
+  document.getElementById('oecdDemand').textContent = r.oecdDemand;
+  document.getElementById('impliedVol').textContent = r.impliedVol;
+  document.getElementById('realVol').textContent = r.realVol;
+  document.getElementById('ngCorr').textContent = r.ngCorr;
+
+  /* ---------------- COT table ---------------- */
+  const cot = moduleData.cot;
+  document.getElementById('cotTable').innerHTML = `
+    <tr><td>Managed Money</td><td>${cot.long}k</td><td>${cot.short}k</td><td class="up">+${cot.long-cot.short}k</td></tr>
+    <tr><td>Producer/Merchant</td><td>142k</td><td>301k</td><td class="down">-159k</td></tr>
+    <tr><td>Swap Dealers</td><td>88k</td><td>76k</td><td class="up">+12k</td></tr>
+    <tr><td>Other Reportables</td><td>54k</td><td>49k</td><td class="up">+5k</td></tr>
+  `;
+
+  /* ---------------- Supply/Demand cards ---------------- */
+  const sGrid = document.getElementById('supplyGrid');
+  sGrid.innerHTML = moduleData.supply.items.map(it=>`
+    <div class="panel col-4" style="text-align:center;">
+      <h3 style="justify-content:center;">${it.label}</h3>
+      <div class="gauge-score" style="font-size:26px;">${it.val}</div>
+    </div>
+  `).join('');
+
+  /* ---------------- Geo bars ---------------- */
+  const geoBarsEl = document.getElementById('geoBars');
+  geoBarsEl.innerHTML = geo.regions.map(reg=>`
+    <div style="margin-bottom:12px;">
+      <div style="display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:12px; margin-bottom:4px;">
+        <span>${reg.name}</span><span style="font-weight:600;">${reg.score}</span>
+      </div>
+      <div style="background:var(--panel-alt); border:1px solid var(--hair); height:10px;">
+        <div style="height:100%; width:${reg.score}%; background:${reg.score>60?'var(--down)':(reg.score>30?'var(--amber)':'var(--up)')};"></div>
+      </div>
+    </div>
+  `).join('');
+
+  /* ---------------- Bar chart helper (SVG) ---------------- */
+  function barChart(svgId, data, opts){
+    const svg = document.getElementById(svgId);
+    const W = 640, H = svg.viewBox.baseVal.height || 210;
+    const padL=36, padR=10, padT=14, padB=26;
+    const innerW = W-padL-padR, innerH = H-padT-padB;
+    const max = Math.max(...data.map(Math.abs), 1);
+    const n = data.length;
+    const bw = innerW/n*0.6;
+    const gap = innerW/n;
+    const zeroY = padT + innerH/2;
+    let s = '';
+    // gridline zero
+    s += `<line x1="${padL}" y1="${zeroY}" x2="${W-padR}" y2="${zeroY}" stroke="var(--hair-strong)" stroke-width="1"/>`;
+    // axis labels
+    s += `<text x="${padL-6}" y="${padT+4}" text-anchor="end" font-size="9" fill="var(--ink-faint)">${max.toFixed(0)}</text>`;
+    s += `<text x="${padL-6}" y="${H-padB}" text-anchor="end" font-size="9" fill="var(--ink-faint)">-${max.toFixed(0)}</text>`;
+    data.forEach((v,i)=>{
+      const x = padL + gap*i + (gap-bw)/2;
+      const h = (Math.abs(v)/max) * (innerH/2);
+      const y = v>=0 ? zeroY-h : zeroY;
+      const color = opts.invert ? (v<0?'var(--up)':'var(--down)') : (v>=0?'var(--up)':'var(--down)');
+      s += `<rect x="${x}" y="${y}" width="${bw}" height="${Math.max(h,1)}" fill="${color}"/>`;
+      s += `<text x="${x+bw/2}" y="${H-8}" text-anchor="middle" font-size="9" fill="var(--ink-faint)">${opts.labels?opts.labels[i]:i+1}</text>`;
+    });
+    svg.innerHTML = s;
+  }
+
+  barChart('invChart', inv.weeks, {invert:true, labels:['-7wk','-6','-5','-4','-3','-2','-1','Last']});
+  barChart('cotChart', cot.netLong.map(v=>v-cot.netLong[0]), {invert:false, labels:['-9wk','-8','-7','-6','-5','-4','-3','-2','-1','Last']});
+
+  /* ---------------- Line chart (DXY) ---------------- */
+  function lineChart(svgId, data){
+    const svg = document.getElementById(svgId);
+    const W=640, H=180, padL=40, padR=14, padT=16, padB=22;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const min=Math.min(...data), max=Math.max(...data);
+    const pts = data.map((v,i)=>{
+      const x = padL + innerW*(i/(data.length-1));
+      const y = padT + innerH*(1-(v-min)/(max-min||1));
+      return [x,y];
+    });
+    const path = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    let s = `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="var(--hair-strong)"/>`;
+    s += `<path d="${path}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+    const last = pts.at(-1);
+    s += `<circle cx="${last[0]}" cy="${last[1]}" r="3.5" fill="var(--amber)"/>`;
+    s += `<text x="${padL-6}" y="${padT+4}" text-anchor="end" font-size="9" fill="var(--ink-faint)">${max.toFixed(1)}</text>`;
+    s += `<text x="${padL-6}" y="${H-padB}" text-anchor="end" font-size="9" fill="var(--ink-faint)">${min.toFixed(1)}</text>`;
+    svg.innerHTML = s;
+  }
+  lineChart('fxChart', fx.dxy);
+
+  /* ---------------- Composite gauge ---------------- */
+  const weights = [
+    ['Inventory', moduleData.inventory.weight, moduleData.inventory.score],
+    ['COT Positioning', moduleData.cot.weight, moduleData.cot.score],
+    ['Geopolitical Risk', moduleData.geo.weight, moduleData.geo.score],
+    ['Currency (DXY)', moduleData.fx.weight, moduleData.fx.score],
+    ['Rates / Macro', moduleData.rates.weight, moduleData.rates.score],
+    ['Supply / Demand', moduleData.supply.weight, moduleData.supply.score],
+  ];
+  let composite = 0, totalW = 0;
+  weights.forEach(w=>{composite += w[1]*w[2]; totalW += w[1];});
+  composite = composite/totalW;
+
+  document.getElementById('weightsBody').innerHTML = weights.map(w=>{
+    const contrib = (w[1]*w[2]/totalW);
+    const isPos = w[2]>=0;
+    return `<tr>
+      <td>${w[0]}</td>
+      <td>${w[1]}%</td>
+      <td class="${isPos?'up':'down'}">${w[2]>0?'+':''}${w[2]}</td>
+      <td>
+        <div style="display:flex; align-items:center; gap:6px; justify-content:flex-end;">
+          <span class="${isPos?'up':'down'}">${contrib>0?'+':''}${contrib.toFixed(1)}</span>
+          <div class="bar-track"><div class="bar-fill ${isPos?'pos':'neg'}" style="width:${Math.min(Math.abs(contrib)*3,45)}px;"></div></div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  document.getElementById('compositeCell').textContent = (composite>0?'+':'')+composite.toFixed(1);
+
+  function biasLabel(v){
+    if(v <= -60) return 'Strongly Bearish';
+    if(v <= -20) return 'Bearish';
+    if(v < 20) return 'Neutral';
+    if(v < 60) return 'Bullish Tilt';
+    return 'Strongly Bullish';
+  }
+  document.getElementById('gaugeScore').textContent = (composite>0?'+':'')+composite.toFixed(1);
+  document.getElementById('gaugeScore').style.color = composite>=0?'var(--up)':'var(--down)';
+  document.getElementById('gaugeLabel').textContent = biasLabel(composite).toUpperCase() + ' · WEIGHTED COMPOSITE READ';
+
+  /* draw semicircular gauge */
+  (function drawGauge(){
+    const svg = document.getElementById('gaugeSvg');
+    const cx=160, cy=160, R=130;
+    let s='';
+    // ticks
+    for(let a=-90;a<=90;a+=18){
+      const rad = a*Math.PI/180;
+      const x1 = cx+ (R-10)*Math.sin(rad), y1 = cy-(R-10)*Math.cos(rad);
+      const x2 = cx+ R*Math.sin(rad), y2 = cy-R*Math.cos(rad);
+      s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="var(--ink-faint)" stroke-width="1.5"/>`;
+    }
+    // arc bands: bearish(left,red) - neutral(mid,gray) - bullish(right,green)
+    function arcPath(a0,a1,r){
+      const r0=a0*Math.PI/180, r1=a1*Math.PI/180;
+      const x0=cx+r*Math.sin(r0), y0=cy-r*Math.cos(r0);
+      const x1=cx+r*Math.sin(r1), y1=cy-r*Math.cos(r1);
+      const large = (a1-a0)>180?1:0;
+      return `M ${x0} ${y0} A ${r} ${r} 0 ${large} 1 ${x1} ${y1}`;
+    }
+    s += `<path d="${arcPath(-90,-20,R)}" fill="none" stroke="var(--down)" stroke-width="14" opacity="0.7"/>`;
+    s += `<path d="${arcPath(-20,20,R)}" fill="none" stroke="var(--ink-faint)" stroke-width="14" opacity="0.5"/>`;
+    s += `<path d="${arcPath(20,90,R)}" fill="none" stroke="var(--up)" stroke-width="14" opacity="0.7"/>`;
+    // labels
+    s += `<text x="${cx-R-4}" y="${cy+8}" font-size="10" fill="var(--down)" text-anchor="middle">BEAR</text>`;
+    s += `<text x="${cx}" y="${cy-R-14}" font-size="10" fill="var(--ink-soft)" text-anchor="middle">NEUTRAL</text>`;
+    s += `<text x="${cx+R+4}" y="${cy+8}" font-size="10" fill="var(--up)" text-anchor="middle">BULL</text>`;
+    // needle
+    const angle = Math.max(-90,Math.min(90, composite*0.9)); // scaled to +-90 over +-100 range
+    const rad = angle*Math.PI/180;
+    const nx = cx + (R-24)*Math.sin(rad), ny = cy - (R-24)*Math.cos(rad);
+    s += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="var(--ink)" stroke-width="3"/>`;
+    s += `<circle cx="${cx}" cy="${cy}" r="6" fill="var(--ink)"/>`;
+    svg.innerHTML = s;
+  })();
+
+})();
+</script>
+</body>
+</html>
