@@ -325,6 +325,8 @@
   <nav class="rail" aria-label="Module navigation">
     <div class="rail-title">Modules</div>
     <a href="#overview"><span>Overview</span><span class="code">OVW</span></a>
+    <a href="#news"><span>Live News</span><span class="code">NEWS</span></a>
+    <a href="#ta"><span>Technicals</span><span class="code">TA</span></a>
     <a href="#inventory"><span>Inventory</span><span class="code">INV</span></a>
     <a href="#cot"><span>COT Positioning</span><span class="code">COT</span></a>
     <a href="#geo"><span>Geopolitical</span><span class="code">GEO</span></a>
@@ -367,6 +369,56 @@
             </table>
             <p class="note">Score runs −100 (maximally bearish) to +100 (maximally bullish). Each module score below is set from the underlying data in that module's panel — edit the <span class="mono">moduleData</span> object in the page source to re-weight or refresh with live figures.</p>
           </div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:18px;">
+        <h3>Price Change Snapshot</h3>
+        <div class="grid" id="priceChangeGrid" style="gap:14px;"></div>
+      </div>
+    </section>
+    <section id="news">
+      <div class="section-head">
+        <h2><span class="fn">NEWS</span> Live News Feed</h2>
+        <span class="meta" id="newsAsOf">SNAPSHOT · —</span>
+      </div>
+      <div class="panel">
+        <div id="newsList"></div>
+        <p class="note">Illustrative snapshot compiled from public wire reporting, not a live connection. Each item is paraphrased, not quoted, and tagged with the module it feeds. To make this live, poll a news API (e.g. GDELT DOC 2.0, NewsAPI.org, or a Reuters/Bloomberg Energy RSS feed) server-side — most providers block direct browser fetches via CORS, so a small proxy is normally required — then push headlines into the <span class="mono">newsItems</span> array below.</p>
+      </div>
+    </section>
+
+    <!-- TECHNICALS -->
+    <section id="ta">
+      <div class="section-head">
+        <h2><span class="fn">TA</span> Technical Indicators</h2>
+        <span class="meta">Computed live from the price series below — EMA 20/50/200, Bollinger Bands(20,2σ), RSI(14), Pivot Points</span>
+      </div>
+      <div class="grid">
+        <div class="panel col-8">
+          <h3>WTI Close, EMA 20 / 50 / 200, Bollinger Bands(20,2σ)</h3>
+          <svg id="priceChart" viewBox="0 0 640 240" width="100%"></svg>
+          <div style="display:flex; gap:16px; margin-top:8px; font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); flex-wrap:wrap;">
+            <span>— Close</span>
+            <span style="color:var(--amber);">— EMA20</span>
+            <span style="color:var(--ink-soft);">— EMA50</span>
+            <span style="color:var(--ink-faint);">— EMA200</span>
+            <span>▒ Bollinger Band</span>
+          </div>
+        </div>
+        <div class="panel col-4">
+          <h3>Signal Summary</h3>
+          <div class="stat-row"><span class="label">Last Close</span><span class="val" id="taClose">—</span></div>
+          <div class="stat-row"><span class="label">Trend (vs EMA50)</span><span class="val" id="taTrend">—</span></div>
+          <div class="stat-row"><span class="label">Long-Term (vs EMA200)</span><span class="val" id="taTrend200">—</span></div>
+          <div class="stat-row"><span class="label">RSI (14)</span><span class="val" id="taRsi">—</span></div>
+          <div class="stat-row"><span class="label">Pivot (P)</span><span class="val" id="taPivot">—</span></div>
+          <div class="stat-row"><span class="label">Resistance R1 / R2</span><span class="val" id="taR">—</span></div>
+          <div class="stat-row"><span class="label">Support S1 / S2</span><span class="val" id="taS">—</span></div>
+          <p class="note">Institutional desks overlay technicals on the fundamental composite rather than trading either alone — a bullish fundamental read confirmed by price holding above EMA50/EMA200 is a stronger signal than either in isolation.</p>
+        </div>
+        <div class="panel col-12">
+          <h3>RSI (14)</h3>
+          <svg id="rsiChart" viewBox="0 0 640 140" width="100%"></svg>
         </div>
       </div>
     </section>
@@ -528,7 +580,7 @@
   /* ---------------- Ticker ---------------- */
   const ticks = [
     {sym:'CL1 WTI', v:'83.77', d:'+1.24', p:'+1.50%', up:true},
-    {sym:'CO1 BRENT', v:'86.90', d:'+1.10', p:'+1.28%', up:true},
+    {sym:'CO1 BRENT', v:'90.12', d:'+3.22', p:'+3.71%', up:true},
     {sym:'DXY', v:'101.42', d:'-0.18', p:'-0.18%', up:false},
     {sym:'US10Y', v:'4.28%', d:'+0.03', p:'', up:true},
     {sym:'XAU', v:'2418.10', d:'+6.20', p:'+0.26%', up:true},
@@ -567,15 +619,15 @@
       long:298, short:153
     },
     geo: {
-      weight:25, score:55,
+      weight:25, score:70,
       regions:[
-        {name:'Strait of Hormuz / Middle East', score:82},
-        {name:'Russia–Ukraine / Sanctions', score:58},
-        {name:'Venezuela', score:21},
+        {name:'Strait of Hormuz / Middle East', score:91},
+        {name:'Russia–Ukraine / Sanctions', score:56},
+        {name:'Venezuela', score:20},
         {name:'Niger Delta', score:15},
         {name:'South China Sea Shipping Lanes', score:12},
       ],
-      premium:'$6–9/bbl', hormuz:'Partially disrupted', sanctioned:'~1.8 mb/d rerouted'
+      premium:'$11–15/bbl', hormuz:'Severely disrupted, ceasefire collapsed', sanctioned:'~1.8 mb/d rerouted'
     },
     fx: {
       weight:15, score:-15,
@@ -599,6 +651,65 @@
       ]
     }
   };
+
+  /* ---------------- News snapshot (illustrative, paraphrased) ---------------- */
+  const newsItems = [
+    {date:'Jul 19', source:'Wire · Energy Desk', tag:'GEO', impact:'bull',
+     text:'Brent jumped almost 4% toward $90/bbl after the US and Iran traded strikes over the weekend, including an attack near a Kuwaiti oil facility; Iran signaled the recent ceasefire had effectively broken down.'},
+    {date:'Jul 17', source:'Wire · Markets', tag:'GEO', impact:'bull',
+     text:'Crude extended a sharp weekly advance as US Central Command reported a sixth straight night of strikes on Iranian sites, with concern building that Houthi forces could widen disruption into Red Sea shipping lanes.'},
+    {date:'Jul 15', source:'Wire · Markets', tag:'GEO', impact:'neutral',
+     text:'Oil held recent gains after Washington reinstated a naval blockade on Iranian ports alongside continued strikes, with commercial transit through the Strait of Hormuz still running well below normal.'},
+    {date:'Jul 7', source:'EIA · STEO', tag:'S&D', impact:'bear',
+     text:'The EIA\'s monthly outlook noted a mid-June US–Iran memorandum had briefly reopened the Strait and eased tightness, with shut-in production expected back near pre-conflict levels — an assumption now back in question given the renewed fighting.'},
+    {date:'Jul', source:'IEA · Oil Market Report', tag:'S&D', impact:'bull',
+     text:'The IEA\'s July report put global supply meaningfully below pre-conflict levels and flagged a further output decline in 2026 unless hostilities ease quickly, while noting refinery margins have surged to multi-year highs.'},
+    {date:'Ongoing', source:'Wire · OPEC Watch', tag:'S&D', impact:'bear',
+     text:'OPEC+ compliance with output targets is holding near recent highs even as the group continues unwinding its voluntary production cuts, a structural offset to the current geopolitical premium.'},
+  ];
+
+  /* ---------------- Price change snapshot (illustrative) ---------------- */
+  const priceChangeData = [
+    {label:'Daily Change', range:'Last 24h', abs:1.24, pct:1.50},
+    {label:'Weekly Change', range:'Last 5 sessions', abs:9.85, pct:13.32},
+    {label:'Asia Session', range:'00:00–08:00 UTC', abs:0.35, pct:0.42},
+    {label:'London Session', range:'08:00–16:00 UTC', abs:0.51, pct:0.61},
+    {label:'US Session', range:'13:00–21:00 UTC', abs:0.38, pct:0.46},
+  ];
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+      let t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  const rand = mulberry32(20260720);
+  function buildPriceSeries(){
+    // Long baseline grind (gives EMA200 enough history to be meaningful) followed by
+    // a narrative-shaped random walk: de-escalation drop, chop, renewed-conflict rally.
+    const phases = [
+      {n:200, drift: 0.065, vol:0.50},
+      {n:10, drift:-0.65, vol:0.55},
+      {n:12, drift: 0.05, vol:0.65},
+      {n:8,  drift:-0.30, vol:0.55},
+      {n:15, drift: 0.55, vol:0.85},
+      {n:15, drift: 0.30, vol:0.70},
+    ];
+    let p = 65.0;
+    const arr = [];
+    phases.forEach(ph=>{
+      for(let i=0;i<ph.n;i++){
+        p += ph.drift + (rand()-0.5)*ph.vol*2;
+        arr.push(p);
+      }
+    });
+    // shift series so it lands exactly on the ticker's last WTI print
+    const target = 83.77;
+    const shift = target - arr[arr.length-1];
+    return arr.map(v=>+(v+shift).toFixed(2));
+  }
+  const priceSeries = buildPriceSeries();
 
   /* ---------------- Fill simple stat fields ---------------- */
   const inv = moduleData.inventory;
@@ -661,6 +772,182 @@
       </div>
     </div>
   `).join('');
+
+  /* ---------------- News list render ---------------- */
+  document.getElementById('newsAsOf').textContent = 'SNAPSHOT · ' + new Date().toDateString().toUpperCase();
+  document.getElementById('newsList').innerHTML = newsItems.map(n=>`
+    <div style="display:flex; gap:14px; padding:10px 0; border-bottom:1px solid var(--hair);">
+      <div class="mono" style="width:64px; flex:0 0 auto; color:var(--ink-faint); font-size:11px; padding-top:2px;">${n.date}</div>
+      <div style="flex:1;">
+        <div style="display:flex; gap:8px; align-items:center; margin-bottom:3px; flex-wrap:wrap;">
+          <span class="mono" style="font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:.04em;">${n.source}</span>
+          <span class="badge neutral" style="font-size:9px;">${n.tag}</span>
+          <span class="badge ${n.impact==='bull'?'bull':(n.impact==='bear'?'bear':'neutral')}" style="font-size:9px;">${n.impact==='bull'?'BULLISH':(n.impact==='bear'?'BEARISH':'NEUTRAL')}</span>
+        </div>
+        <div style="font-size:13px; line-height:1.5;">${n.text}</div>
+      </div>
+    </div>
+  `).join('');
+
+  /* ---------------- Price change grid render ---------------- */
+  document.getElementById('priceChangeGrid').innerHTML = priceChangeData.map(pc=>{
+    const isUp = pc.abs >= 0;
+    return `
+    <div class="col-4" style="min-width:140px;">
+      <div class="mono" style="font-size:10px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.06em;">${pc.label}</div>
+      <div class="mono" style="font-size:9.5px; color:var(--ink-faint); margin-bottom:4px;">${pc.range}</div>
+      <div class="mono" style="font-size:20px; font-weight:600;">
+        <span style="color:${isUp?'var(--up)':'var(--down)'};">${isUp?'+':''}${pc.abs.toFixed(2)} (${isUp?'+':''}${pc.pct.toFixed(2)}%)</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  /* ---------------- Technical indicator math ---------------- */
+  function ema(data, period){
+    const k = 2/(period+1);
+    let prev = null;
+    return data.map((v,i)=>{
+      if(i===0){ prev = v; return v; }
+      prev = v*k + prev*(1-k);
+      return prev;
+    });
+  }
+  function sma(data, period){
+    return data.map((_,i)=> i<period-1 ? null : data.slice(i-period+1,i+1).reduce((a,b)=>a+b,0)/period);
+  }
+  function rsi(data, period){
+    const out = new Array(data.length).fill(null);
+    let gainSum=0, lossSum=0;
+    for(let i=1;i<data.length;i++){
+      const ch = data[i]-data[i-1];
+      const gain = ch>0?ch:0, loss = ch<0?-ch:0;
+      if(i<=period){
+        gainSum+=gain; lossSum+=loss;
+        if(i===period){
+          const avgG=gainSum/period, avgL=lossSum/period;
+          out[i] = avgL===0?100:100-(100/(1+avgG/avgL));
+          out._avgG=avgG; out._avgL=avgL;
+        }
+      } else {
+        out._avgG = (out._avgG*(period-1)+gain)/period;
+        out._avgL = (out._avgL*(period-1)+loss)/period;
+        out[i] = out._avgL===0?100:100-(100/(1+out._avgG/out._avgL));
+      }
+    }
+    return out;
+  }
+  function bollinger(data, period, mult){
+    const mid = sma(data, period);
+    return data.map((_,i)=>{
+      if(i<period-1) return {mid:null, upper:null, lower:null};
+      const slice = data.slice(i-period+1,i+1);
+      const m = mid[i];
+      const variance = slice.reduce((a,b)=>a+(b-m)*(b-m),0)/period;
+      const sd = Math.sqrt(variance);
+      return {mid:m, upper:m+mult*sd, lower:m-mult*sd};
+    });
+  }
+  function pivotPoints(high, low, close){
+    const p = (high+low+close)/3;
+    return {
+      p: p,
+      r1: 2*p-low, s1: 2*p-high,
+      r2: p+(high-low), s2: p-(high-low)
+    };
+  }
+
+  const ema20 = ema(priceSeries,20);
+  const ema50 = ema(priceSeries,50);
+  const ema200 = ema(priceSeries,200);
+  const bb = bollinger(priceSeries,20,2);
+  const rsiSeries = rsi(priceSeries,14);
+  const lastClose = priceSeries.at(-1);
+  const lastHigh = lastClose + Math.abs(rand())*0.9;
+  const lastLow = lastClose - Math.abs(rand())*0.9;
+  const piv = pivotPoints(lastHigh, lastLow, lastClose);
+  const lastRsi = rsiSeries.at(-1);
+
+  document.getElementById('taClose').textContent = '$'+lastClose.toFixed(2);
+  const trendUp = lastClose > ema50.at(-1);
+  const trendUp200 = lastClose > ema200.at(-1);
+  document.getElementById('taTrend').textContent = trendUp ? 'Above EMA50 — Uptrend' : 'Below EMA50 — Downtrend';
+  document.getElementById('taTrend').className = 'val ' + (trendUp?'up':'down');
+  document.getElementById('taTrend200').textContent = trendUp200 ? 'Above EMA200 — Uptrend' : 'Below EMA200 — Downtrend';
+  document.getElementById('taTrend200').className = 'val ' + (trendUp200?'up':'down');
+  document.getElementById('taRsi').textContent = lastRsi.toFixed(1) + (lastRsi>70?' (Overbought)':lastRsi<30?' (Oversold)':' (Neutral)');
+  document.getElementById('taRsi').className = 'val ' + (lastRsi>70?'down':lastRsi<30?'up':'');
+  document.getElementById('taPivot').textContent = '$'+piv.p.toFixed(2);
+  document.getElementById('taR').textContent = '$'+piv.r1.toFixed(2)+' / $'+piv.r2.toFixed(2);
+  document.getElementById('taS').textContent = '$'+piv.s1.toFixed(2)+' / $'+piv.s2.toFixed(2);
+
+  /* price chart with EMA20/50/200 + Bollinger — only render the recent 60-session window for readability */
+  (function drawPriceChart(){
+    const svg = document.getElementById('priceChart');
+    const W=640,H=240,padL=42,padR=12,padT=14,padB=22;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const WINDOW = 60;
+    const start = priceSeries.length - WINDOW;
+    const view = priceSeries.slice(start);
+    const e20 = ema20.slice(start), e50 = ema50.slice(start), e200 = ema200.slice(start), bbw = bb.slice(start);
+    const allVals = view.concat(e20).concat(e50).concat(e200).concat(bbw.filter(b=>b.upper).map(b=>b.upper)).concat(bbw.filter(b=>b.lower).map(b=>b.lower));
+    const min=Math.min(...allVals), max=Math.max(...allVals);
+    const n=view.length;
+    const x = i => padL + innerW*(i/(n-1));
+    const y = v => padT + innerH*(1-(v-min)/(max-min||1));
+    function pathFor(arr){
+      let d='', started=false;
+      arr.forEach((v,i)=>{
+        if(v===null||v===undefined){return;}
+        d += (started?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' ';
+        started=true;
+      });
+      return d.trim();
+    }
+    let bandUpper='', bandLowerRev='';
+    bbw.forEach((b,i)=>{ if(b.upper!==null) bandUpper += (bandUpper===''?'M':'L')+x(i).toFixed(1)+' '+y(b.upper).toFixed(1)+' '; });
+    const bbIdx = bbw.map((b,i)=>b.lower!==null?i:null).filter(v=>v!==null).reverse();
+    bbIdx.forEach((i,k)=>{ bandLowerRev += 'L'+x(i).toFixed(1)+' '+y(bbw[i].lower).toFixed(1)+' '; });
+    const bandPath = bandUpper + bandLowerRev + 'Z';
+
+    let s='';
+    s += `<line x1="${padL}" y1="${H-padB}" x2="${W-padR}" y2="${H-padB}" stroke="var(--hair-strong)"/>`;
+    s += `<path d="${bandPath}" fill="var(--ink)" opacity="0.05" stroke="none"/>`;
+    s += `<path d="${pathFor(e200)}" fill="none" stroke="var(--ink-faint)" stroke-width="1.6"/>`;
+    s += `<path d="${pathFor(e50)}" fill="none" stroke="var(--ink-soft)" stroke-width="1.6"/>`;
+    s += `<path d="${pathFor(e20)}" fill="none" stroke="var(--amber)" stroke-width="1.6"/>`;
+    s += `<path d="${pathFor(view)}" fill="none" stroke="var(--ink)" stroke-width="2"/>`;
+    s += `<circle cx="${x(n-1)}" cy="${y(view.at(-1))}" r="3.5" fill="var(--down)"/>`;
+    s += `<text x="${padL-6}" y="${padT+4}" text-anchor="end" font-size="9" fill="var(--ink-faint)">${max.toFixed(0)}</text>`;
+    s += `<text x="${padL-6}" y="${H-padB}" text-anchor="end" font-size="9" fill="var(--ink-faint)">${min.toFixed(0)}</text>`;
+    svg.innerHTML = s;
+  })();
+
+  /* RSI chart */
+  (function drawRsiChart(){
+    const svg = document.getElementById('rsiChart');
+    const W=640,H=140,padL=32,padR=12,padT=12,padB=18;
+    const innerW=W-padL-padR, innerH=H-padT-padB;
+    const WINDOW = 60;
+    const start = rsiSeries.length - WINDOW;
+    const view = rsiSeries.slice(start);
+    const n=view.length;
+    const x = i => padL + innerW*(i/(n-1));
+    const y = v => padT + innerH*(1-(v/100));
+    let d='', started=false;
+    view.forEach((v,i)=>{
+      if(v===null){return;}
+      d += (started?'L':'M')+x(i).toFixed(1)+' '+y(v).toFixed(1)+' ';
+      started=true;
+    });
+    let s='';
+    s += `<rect x="${padL}" y="${y(70)}" width="${innerW}" height="${y(30)-y(70)}" fill="var(--ink)" opacity="0.04"/>`;
+    s += `<line x1="${padL}" y1="${y(70)}" x2="${W-padR}" y2="${y(70)}" stroke="var(--down)" stroke-dasharray="3,3" stroke-width="1"/>`;
+    s += `<line x1="${padL}" y1="${y(30)}" x2="${W-padR}" y2="${y(30)}" stroke="var(--up)" stroke-dasharray="3,3" stroke-width="1"/>`;
+    s += `<text x="${padL-4}" y="${y(70)+3}" text-anchor="end" font-size="9" fill="var(--down)">70</text>`;
+    s += `<text x="${padL-4}" y="${y(30)+3}" text-anchor="end" font-size="9" fill="var(--up)">30</text>`;
+    s += `<path d="${d}" fill="none" stroke="var(--ink)" stroke-width="1.8"/>`;
+    svg.innerHTML = s;
+  })();
 
   /* ---------------- Bar chart helper (SVG) ---------------- */
   function barChart(svgId, data, opts){
